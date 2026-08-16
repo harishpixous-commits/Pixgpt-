@@ -12,7 +12,7 @@
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com"
         },
         "StringLike": {
-          "token.actions.githubusercontent.com:sub": "repo:harishpixous-commits/Pixgpt-:ref:refs/heads/main"
+          "token.actions.githubusercontent.com:sub": "repo:*@295011985/*@1335844039:ref:refs/heads/main"
         }
       }
     }
