@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Loader2, Mic, Square } from 'lucide-react'
 import { chatApi } from '../../lib/api'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 import { Tooltip } from '../ui/Tooltip'
 
 type VoiceState = 'idle' | 'recording' | 'processing' | 'error'

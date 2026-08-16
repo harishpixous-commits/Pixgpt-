@@ -5,7 +5,7 @@ import type { ChatMessage } from '../../lib/types'
 import { copyToClipboard, cn } from '../../lib/utils'
 import { usePixGptStore } from '../../lib/store'
 import { speak, speechSupported, stopSpeaking, toPlainText, useSpeakingKey } from '../../lib/speech'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 import { Tooltip } from '../ui/Tooltip'
 import { Dropdown, type MenuItem } from '../ui/Dropdown'
 

@@ -96,6 +96,34 @@ export function classify(program, args = []) {
     return { risk: RISK.REQUIRES_APPROVAL, reason: `\`${prog}\` is not a recognised development tool.` }
   }
 
+  /*
+   * Inline-code execution is the one command form that reaches the machine
+   * without ever touching a file: `node -e '…'` and `python -c '…'` run
+   * arbitrary code straight from the prompt, invisible to the user. It is the
+   * documented gap in this policy (see docs/freebuff-analysis.md), and the
+   * fix is the same as for every other risky command — approval.
+   *
+   * Running a script FROM a file stays open: the code is inspectable and was
+   * written through the same edit tools the agent already has, so it adds no
+   * new capability. `-m`/`--module` is included because `python -m pip …`
+   * would otherwise smuggle a package install past the pip gate, and
+   * `python -m http.server` opens a listener.
+   */
+  const EVAL_FLAGS = {
+    node: /^(-e|-p|-pe|-i|-r|--eval|--print|--interactive|--repl|--require|--import|--input-type)(=.*)?$/,
+    python: /^(-c|-i|-m|--module)$/,
+    python3: /^(-c|-i|-m|--module)$/,
+    ruby: /^-e$/,
+    php: /^-r$/,
+  }
+  const evalRe = EVAL_FLAGS[prog]
+  if (evalRe && args.some((a) => evalRe.test(String(a).trim()))) {
+    return {
+      risk: RISK.REQUIRES_APPROVAL,
+      reason: `\`${prog}\` inline code execution needs approval — the code never appears in a file.`,
+    }
+  }
+
   if (prog === 'git') {
     const sub = String(args[0] ?? '').toLowerCase()
     if (GIT_DESTRUCTIVE.has(sub)) {
@@ -112,12 +140,18 @@ export function classify(program, args = []) {
     }
 
     /*
-     * npx fetches and executes a package straight from the registry. That is
-     * arbitrary remote code running in the workspace, which is precisely what
-     * approval is for.
+     * npx — and the exec/dlх forms of npm, pnpm and yarn — fetch a package
+     * from the registry and run it. That is arbitrary remote code in the
+     * workspace, which is precisely what approval is for.
      */
-    if (prog === 'npx') {
-      return { risk: RISK.REQUIRES_APPROVAL, reason: 'npx downloads and runs a package from the registry.' }
+    if (prog === 'npx' || ['exec', 'x', 'dlx'].includes(sub)) {
+      return {
+        risk: RISK.REQUIRES_APPROVAL,
+        reason:
+          prog === 'npx'
+            ? 'npx downloads and runs a package from the registry.'
+            : `\`${prog} ${sub}\` downloads and runs a package from the registry.`,
+      }
     }
 
     if (['install', 'i', 'add', 'ci', 'create'].includes(sub)) {

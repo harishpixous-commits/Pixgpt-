@@ -11,7 +11,7 @@ import {
   type PdfModification,
 } from '../../lib/documents'
 import { Button, IconButton } from '../ui/Button'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 
 interface PdfEditDialogProps {
   open: boolean

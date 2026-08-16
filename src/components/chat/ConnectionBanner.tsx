@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { RefreshCw, WifiOff } from 'lucide-react'
 import { useOnlineStatus } from '../../lib/hooks'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 
 /**
  * Non-blocking connectivity notice (§21). Driven by the browser's real

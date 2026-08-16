@@ -19,7 +19,7 @@ import sql from 'react-syntax-highlighter/dist/esm/languages/prism/sql'
 import markdownLang from 'react-syntax-highlighter/dist/esm/languages/prism/markdown'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Check, Copy } from 'lucide-react'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 import { copyToClipboard } from '../../lib/utils'
 import { useState } from 'react'
 

@@ -7,7 +7,7 @@ import { isDemoMode } from '../../lib/api'
 import { Dropdown, type MenuItem } from '../ui/Dropdown'
 import { IconButton } from '../ui/Button'
 import { Tooltip } from '../ui/Tooltip'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 import { cn, copyToClipboard, downloadTextFile, truncate } from '../../lib/utils'
 
 interface ChatHeaderProps {

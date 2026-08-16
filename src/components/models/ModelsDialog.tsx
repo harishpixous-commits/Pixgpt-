@@ -20,7 +20,7 @@ import {
   type RegistrySummary,
 } from '../../lib/modelcatalog'
 import { Button, IconButton } from '../ui/Button'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 import { useFocusTrap } from '../../lib/hooks'
 import { cn } from '../../lib/utils'
 

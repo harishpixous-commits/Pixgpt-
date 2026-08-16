@@ -17,7 +17,7 @@ import { Button } from '../ui/Button'
 import { usePixGptStore } from '../../lib/store'
 import { MODELS, MODEL_IDS } from '../../lib/models'
 import { speak, speechSupported, stopSpeaking, useSpeakingKey, useVoices } from '../../lib/speech'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 import { cn } from '../../lib/utils'
 
 type TabId = 'general' | 'ai' | 'chat' | 'voice' | 'account'

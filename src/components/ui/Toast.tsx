@@ -1,27 +1,14 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, CheckCircle2, Info, X } from 'lucide-react'
 import { uid } from '../../lib/utils'
-
-type ToastTone = 'default' | 'success' | 'error'
+import { ToastContext, type ToastTone } from './toast-context'
 
 interface ToastData {
   id: string
   title: string
   description?: string
   tone: ToastTone
-}
-
-interface ToastContextValue {
-  push: (toast: { title: string; description?: string; tone?: ToastTone }) => void
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null)
-
-export function useToast(): ToastContextValue {
-  const ctx = useContext(ToastContext)
-  if (!ctx) throw new Error('useToast must be used within <ToastProvider>')
-  return ctx
 }
 
 const TONE_ICON: Record<ToastTone, typeof Info> = {

@@ -230,10 +230,14 @@ every command into `SAFE` / `LOW_RISK` / `REQUIRES_APPROVAL` / `BLOCKED`, scrubs
 the child environment, and confines the working directory. That is a stronger
 model and it stays.
 
-One caveat, found in PixGPT's own audit and unchanged by this work: `node -e`
-classifies as `SAFE`, so an agent can still reach arbitrary code execution
-through it. PixGPT's design is better; this specific hole is real and open in
-both products.
+The one real gap this audit found — `node -e` classifies as `SAFE`, so an agent
+could reach arbitrary code execution without it ever touching a file — is now
+closed: inline-code flags (`node -e/--eval/-p/-i/-r/--require/--import`, plus
+`python -c/-i/-m`, `ruby -e` and `php -r`) require approval, as do the
+registry-exec forms `npm exec` / `npm x` / `pnpm dlx` / `yarn dlx`. Running a
+script from a file stays open because that code is inspectable and was written
+through the same edit tools the agent already has. Freebuff's equivalent is
+out of our reach; ours is no longer open.
 
 ### Model catalogue — not reachable
 

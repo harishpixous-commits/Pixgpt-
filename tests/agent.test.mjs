@@ -103,6 +103,53 @@ describe('command policy', () => {
     assert.equal(classify('npx', ['create-vite', 'app']).risk, RISK.REQUIRES_APPROVAL)
   })
 
+  test('inline code execution flags need approval — the node -e hole', () => {
+    for (const [prog, args] of [
+      ['node', ['-e', 'process.exit(1)']],
+      ['node', ['--eval', '1+1']],
+      ['node', ['--eval=console.log(1)']],
+      ['node', ['-p', '1+1']],
+      ['node', ['-pe', '1+1']],
+      ['node', ['-i']],
+      ['node', ['-r', './preload.js']],
+      ['node', ['--require', 'fs']],
+      ['node', ['--import', 'module']],
+      ['node', ['--input-type=module', '-e', 'import x from "y"']],
+      ['python', ['-c', 'print(1)']],
+      ['python3', ['-i']],
+      ['python', ['-m', 'http.server']],
+      ['python3', ['--module', 'pip', 'install', 'requests']],
+      ['ruby', ['-e', 'puts 1']],
+      ['php', ['-r', 'echo 1']],
+    ]) {
+      const { risk, reason } = classify(prog, args)
+      assert.equal(risk, RISK.REQUIRES_APPROVAL, `${prog} ${args.join(' ')} should need approval`)
+      assert.match(reason, /inline code/i)
+    }
+  })
+
+  test('running a script from a file stays unblocked — the code is inspectable', () => {
+    assert.equal(classify('node', ['index.js']).risk, RISK.SAFE)
+    assert.equal(classify('node', ['--watch', 'index.js']).risk, RISK.SAFE)
+    assert.equal(classify('node', ['-v']).risk, RISK.SAFE)
+    assert.equal(classify('node', ['-c', 'index.js']).risk, RISK.SAFE)
+    assert.equal(classify('node', ['--test']).risk, RISK.SAFE)
+    assert.equal(classify('python', ['script.py']).risk, RISK.SAFE)
+  })
+
+  test('registry package exec needs approval like npx', () => {
+    for (const [prog, args] of [
+      ['npm', ['exec', 'cowsay']],
+      ['npm', ['x', 'vite']],
+      ['pnpm', ['dlx', 'prisma']],
+      ['yarn', ['dlx', 'tsx']],
+    ]) {
+      const { risk, reason } = classify(prog, args)
+      assert.equal(risk, RISK.REQUIRES_APPROVAL, `${prog} ${args.join(' ')} should need approval`)
+      assert.match(reason, /registry/i)
+    }
+  })
+
   test('running project scripts stays unblocked', () => {
     assert.equal(classify('npm', ['run', 'build']).risk, RISK.SAFE)
     assert.equal(classify('npm', ['test']).risk, RISK.SAFE)

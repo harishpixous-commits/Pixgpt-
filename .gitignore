@@ -31,6 +31,10 @@ dist-ssr
 # Agent task workspaces — generated projects, never committed
 .pixgpt-workspaces/
 
+# Stray HTTP debugging captures (curl -D/-o style), if any ever appear again
+body1
+hdr1
+
 # Freebuff desktop app state — not PixGPT source, and its `messages` table
 # holds real conversation content. Analysed in docs/freebuff-analysis.md;
 # nothing from it belongs in this repository.

@@ -16,7 +16,7 @@ import { ImportProjectDialog } from '../documents/ImportProjectDialog'
 import { SettingsDialog } from '../settings/SettingsDialog'
 import { HelpDialog } from './HelpDialog'
 import { ConfirmDialog } from '../ui/ConfirmDialog'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 
 interface ConfirmRequest {
   title: string

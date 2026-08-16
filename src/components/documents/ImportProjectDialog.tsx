@@ -4,7 +4,7 @@ import { FileArchive, Loader2, Upload, X } from 'lucide-react'
 import { importProjectZip, type ImportedProject } from '../../lib/agent'
 import { formatBytes } from '../../lib/documents'
 import { Button, IconButton } from '../ui/Button'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 
 interface ImportProjectDialogProps {
   open: boolean

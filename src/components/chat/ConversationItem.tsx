@@ -5,7 +5,7 @@ import type { Conversation } from '../../lib/types'
 import { usePixGptStore } from '../../lib/store'
 import { cn, truncate } from '../../lib/utils'
 import { Dropdown } from '../ui/Dropdown'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 
 interface ConversationItemProps {
   conversation: Conversation

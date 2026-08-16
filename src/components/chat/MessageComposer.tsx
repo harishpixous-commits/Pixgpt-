@@ -8,7 +8,7 @@ import type { Attachment } from '../../lib/types'
 import { cn, uid } from '../../lib/utils'
 import { AttachmentPreview } from './AttachmentPreview'
 import { VoiceInput } from './VoiceInput'
-import { useToast } from '../ui/Toast'
+import { useToast } from '../ui/toast-context'
 import { Tooltip } from '../ui/Tooltip'
 
 const MAX_FILES_PER_SEND = 5
@@ -118,6 +118,13 @@ export function MessageComposer() {
     !isStreamingHere &&
     !agentRunning
 
+  /*
+   * Build and Debug drive the coding agent, which takes only an objective —
+   * attachments are never sent. Offering the buttons anyway would let a user
+   * attach files that then vanish silently on send, so they are not shown.
+   */
+  const canAttach = mode !== 'build' && mode !== 'debug'
+
   /** Uploads one already-registered attachment; reused by retry. */
   const runUpload = useCallback(
     async (id: string, name: string) => {
@@ -223,7 +230,7 @@ export function MessageComposer() {
   const dragDepth = useRef(0)
 
   const onDragEnter = (e: React.DragEvent) => {
-    if (!e.dataTransfer.types.includes('Files')) return
+    if (!canAttach || !e.dataTransfer.types.includes('Files')) return
     dragDepth.current += 1
     setDragging(true)
   }
@@ -234,7 +241,7 @@ export function MessageComposer() {
   }
 
   const onDrop = (e: React.DragEvent) => {
-    if (!e.dataTransfer.types.includes('Files')) return
+    if (!canAttach || !e.dataTransfer.types.includes('Files')) return
     e.preventDefault()
     dragDepth.current = 0
     setDragging(false)
@@ -246,7 +253,7 @@ export function MessageComposer() {
       className="composer-zone"
       onDragEnter={onDragEnter}
       onDragOver={(e) => {
-        if (e.dataTransfer.types.includes('Files')) e.preventDefault()
+        if (canAttach && e.dataTransfer.types.includes('Files')) e.preventDefault()
       }}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
@@ -313,37 +320,41 @@ export function MessageComposer() {
 
         <div className="composer-tools">
           <div className="composer-tools-left">
-            <input
-              ref={fileRef}
-              type="file"
-              multiple
-              hidden
-              onChange={(e) => {
-                void upload(e.target.files)
-                e.target.value = ''
-              }}
-            />
-            <input
-              ref={imageRef}
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={(e) => {
-                void upload(e.target.files)
-                e.target.value = ''
-              }}
-            />
-            <Tooltip label="Attach file">
-              <button type="button" className="composer-tool" aria-label="Attach file" onClick={() => fileRef.current?.click()}>
-                <Paperclip size={17} />
-              </button>
-            </Tooltip>
-            <Tooltip label="Upload image">
-              <button type="button" className="composer-tool" aria-label="Upload image" onClick={() => imageRef.current?.click()}>
-                <ImagePlus size={17} />
-              </button>
-            </Tooltip>
+            {canAttach && (
+              <>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  multiple
+                  hidden
+                  onChange={(e) => {
+                    void upload(e.target.files)
+                    e.target.value = ''
+                  }}
+                />
+                <input
+                  ref={imageRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  hidden
+                  onChange={(e) => {
+                    void upload(e.target.files)
+                    e.target.value = ''
+                  }}
+                />
+                <Tooltip label="Attach file">
+                  <button type="button" className="composer-tool" aria-label="Attach file" onClick={() => fileRef.current?.click()}>
+                    <Paperclip size={17} />
+                  </button>
+                </Tooltip>
+                <Tooltip label="Upload image">
+                  <button type="button" className="composer-tool" aria-label="Upload image" onClick={() => imageRef.current?.click()}>
+                    <ImagePlus size={17} />
+                  </button>
+                </Tooltip>
+              </>
+            )}
             {webAvailable ? (
             <Tooltip label={webEnabled ? 'Web search on — answers use live results' : 'Search the web for current information'}>
               <button
