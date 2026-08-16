@@ -10,6 +10,7 @@
         "ssm:ListCommands"
       ],
       "Resource": [
+        "arn:aws:ssm:us-east-1:276699357742:*",
         "arn:aws:ssm:us-east-1:276699357742:managed-instance/i-0ddf81f47a06510c3",
         "arn:aws:ec2:us-east-1:276699357742:instance/i-0ddf81f47a06510c3",
         "arn:aws:ssm:us-east-1::document/AWS-RunShellScript"
