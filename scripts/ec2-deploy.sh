@@ -26,5 +26,12 @@ sleep 3
 
 echo "services: omniroute=$(systemctl is-active omniroute) pixgpt=$(systemctl is-active pixgpt)"
 curl -fsS -o /dev/null -w "http=%{http_code}\n" http://localhost/ || echo "http=failed"
-curl -fsS --max-time 10 http://localhost/api/health || echo "health=failed"
+HEALTH=$(curl -fsS --max-time 10 http://localhost/api/health || true)
+echo "health=$HEALTH"
+if echo "$HEALTH" | grep -q '"reachable":true'; then
+  echo "gateway=ok"
+else
+  echo "gateway=FAILED"
+  exit 1
+fi
 echo "=== deploy done $(date -u) ==="
