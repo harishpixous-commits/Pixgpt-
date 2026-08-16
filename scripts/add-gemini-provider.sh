@@ -26,8 +26,8 @@ if [[ -z "$KEY" ]]; then
   echo "get a free key at https://aistudio.google.com/apikey" >&2
   exit 2
 fi
-if [[ "$KEY" != AIza* ]]; then
-  echo "error: a Gemini API key starts with 'AIza...' — got '$KEY'" >&2
+if [[ "$KEY" != AIza* && "$KEY" != AQ.* ]]; then
+  echo "error: a Gemini API key starts with 'AIza...' or 'AQ....' — got '$KEY'" >&2
   exit 2
 fi
 
@@ -115,6 +115,8 @@ ok "refresh: $(head -c 150 <<<"$REFRESH")"
 
 echo
 printf '\033[1;32mDONE — Gemini is wired into OmniRoute.\033[0m\n'
-echo "Next: set OMNIROUTE_MODEL_VISION=gemini/gemini-2.5-flash (or add it to"
+echo "Next: set OMNIROUTE_MODEL_VISION=gemini/gemini-3.5-flash (or add it to"
 echo "OMNIROUTE_VISION_FALLBACK_MODELS) on the instance, then restart pixgpt,"
 echo "so the pixgpt-vision alias uses Gemini for real image analysis."
+echo "(scripts/ensure-gemini.sh does this automatically when gemini.env is"
+echo "present in the config S3 bucket — see the deploy pipeline.)

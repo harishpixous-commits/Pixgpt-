@@ -111,4 +111,10 @@ systemctl daemon-reload
 systemctl enable pixgpt
 systemctl start pixgpt
 
+# If the operator added a Gemini key (gemini.env in the config bucket), ensure
+# the provider exists in OmniRoute and merge its routing env into the app env.
+# Idempotent; a no-op when no key is configured.
+bash /opt/pixgpt/scripts/ensure-gemini.sh || true
+systemctl restart pixgpt
+
 echo "=== bootstrap done $(date -u) ==="
