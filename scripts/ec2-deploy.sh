@@ -22,16 +22,25 @@ npm run build
 systemctl is-active --quiet omniroute || systemctl start omniroute
 
 systemctl restart pixgpt
-sleep 3
 
-echo "services: omniroute=$(systemctl is-active omniroute) pixgpt=$(systemctl is-active pixgpt)"
-curl -fsS -o /dev/null -w "http=%{http_code}\n" http://localhost/ || echo "http=failed"
-HEALTH=$(curl -fsS --max-time 10 http://localhost/api/health || true)
-echo "health=$HEALTH"
-if echo "$HEALTH" | grep -q '"reachable":true'; then
-  echo "gateway=ok"
-else
-  echo "gateway=FAILED"
-  exit 1
-fi
-echo "=== deploy done $(date -u) ==="
+# The server takes a few seconds after restart to probe the gateway and
+# warm the model catalogue; a single immediate health check would fail
+# with reachable:false (code=timeout). Poll until it reports healthy.
+for i in $(seq 1 12); do
+  sleep 5
+  HTTP=$(curl -fsS -o /dev/null -w "%{http_code}" http://localhost/ || echo failed)
+  HEALTH=$(curl -fsS --max-time 10 http://localhost/api/health || true)
+  if echo "$HEALTH" | grep -q '"reachable":true'; then
+    echo "services: omniroute=$(systemctl is-active omniroute) pixgpt=$(systemctl is-active pixgpt)"
+    echo "http=$HTTP"
+    echo "health=$HEALTH"
+    echo "gateway=ok"
+    echo "=== deploy done $(date -u) ==="
+    exit 0
+  fi
+  echo "waiting for gateway... ($i/12) http=$HTTP health=$(echo "$HEALTH" | head -c 120)"
+done
+
+echo "gateway=FAILED after 60s"
+exit 1
+
