@@ -1,0 +1,495 @@
+/* ============================================================
+   Skills panel
+   ------------
+   Uses the existing PixGPT tokens throughout — no new colour system.
+   Every animated property is disabled under prefers-reduced-motion.
+   ============================================================ */
+
+.skills-dialog {
+  max-width: 760px;
+  max-height: min(88dvh, 820px);
+}
+
+.skills-dialog .dialog-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.skills-subtitle {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.skills-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.skills-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.skills-search:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.skills-search svg {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.skills-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 0;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  outline: none;
+}
+
+/* The native clear button is unstyleable and differs across browsers */
+.skills-search input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.skills-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.skills-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 0 11px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.skills-chip:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.skills-chip-active {
+  color: var(--primary-contrast);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.skills-chip-count {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  /*
+   * No opacity. Dimming --text-secondary to 75% composited to 4.11:1 against
+   * white, below the 4.5:1 minimum for text this size.
+   */
+  color: inherit;
+}
+
+.skills-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 20px 12px;
+}
+
+.skills-loading,
+.skills-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.skills-group {
+  margin-top: 14px;
+}
+
+.skills-group-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 6px;
+  padding: 8px 0 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-elevated);
+}
+
+.skills-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skill-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 12px;
+  padding: 10px 10px 10px 8px;
+  border-radius: var(--radius);
+  transition: background 0.14s ease;
+}
+
+.skill-row:hover {
+  background: var(--surface-hover);
+}
+
+/* A blocked skill stays legible: it is information, not an error state */
+.skill-row-blocked .skill-icon,
+.skill-row-blocked .skill-description {
+  opacity: 0.7;
+}
+
+.skill-main {
+  display: flex;
+  gap: 11px;
+  min-width: 0;
+}
+
+.skill-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  margin-top: 1px;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  border-radius: 8px;
+}
+
+.skill-text {
+  min-width: 0;
+}
+
+.skill-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.skill-name {
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.skill-name:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.skill-status {
+  padding: 1px 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/*
+ * Status colours come from the existing palette rather than new hues.
+ *
+ * The tint is mixed into --surface, not into transparency. Mixing with
+ * transparent lets the backdrop show through and *lightens* it in dark mode,
+ * which pushed green-on-tint to 4.38:1 — below the 4.5:1 minimum for a bold
+ * 10.5px badge. Mixing into the surface keeps the backdrop on the right side of
+ * the theme in both directions.
+ */
+.skill-status-ok {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+}
+
+.skill-status-warn {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+  border: 1px solid var(--border-strong, var(--border));
+}
+
+.skill-status-muted {
+  color: var(--text-muted);
+  background: var(--surface-hover);
+}
+
+.skill-status-error {
+  color: var(--error);
+  background: var(--surface-hover);
+}
+
+.skill-description {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.skill-blocked {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.skill-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.skill-fav {
+  color: var(--text-muted);
+}
+
+.skill-fav-on {
+  color: var(--primary);
+}
+
+/*
+ * The off state needs a visible track. `--border-strong` is a 28%-alpha hairline
+ * intended for dividers; used as a fill it disappeared against the panel and
+ * left a white dot floating with no control around it.
+ */
+.skill-switch {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  width: 42px;
+  height: 24px;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border-strong, var(--border));
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.skill-switch-on {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.skill-switch:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.skill-switch:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.skill-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  /* Muted when off so the control reads as inactive, not merely unlit */
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1), background 0.18s ease;
+}
+
+.skill-switch-on .skill-switch-thumb {
+  background: var(--primary-contrast);
+  transform: translateX(18px);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+}
+
+.skill-unavailable,
+.skill-locked {
+  padding-right: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.skill-detail {
+  grid-column: 1 / -1;
+  overflow: hidden;
+}
+
+.skill-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 14px;
+  margin: 8px 0 0 41px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.skill-facts dt {
+  font-weight: 650;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.skill-facts dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.skill-facts code {
+  font-family: var(--font-mono, ui-monospace, Consolas, monospace);
+  font-size: 11.5px;
+}
+
+.skill-requirements {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.skill-requirements li {
+  position: relative;
+  padding-left: 16px;
+  line-height: 1.55;
+}
+
+.skill-requirements li::before {
+  position: absolute;
+  left: 0;
+  font-weight: 700;
+}
+
+.skill-requirements li.met::before {
+  content: "\2713";
+  color: var(--primary);
+}
+
+.skill-requirements li.unmet::before {
+  content: "!";
+  color: var(--text-muted);
+}
+
+.skill-requirements em {
+  color: var(--text-muted);
+  font-style: normal;
+}
+
+.skill-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0 0 41px;
+}
+
+.skill-setting {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.skill-setting select,
+.skill-setting input[type="number"] {
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--text-primary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+}
+
+.skill-setting input[type="number"] {
+  width: 72px;
+}
+
+.skill-fix {
+  margin: 8px 0 0 41px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.skills-note {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Motion is a clarification, not decoration: remove it when asked to */
+@media (prefers-reduced-motion: reduce) {
+  .skills-chip,
+  .skills-search,
+  .skill-row,
+  .skill-switch,
+  .skill-switch-thumb {
+    transition: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .skill-facts,
+  .skill-settings,
+  .skill-fix {
+    margin-left: 0;
+  }
+
+  .skill-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .skills-note {
+    display: none;
+  }
+}

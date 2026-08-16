@@ -1,0 +1,97 @@
+{
+  "total_count": 1000,
+  "incomplete_results": false,
+  "items": [
+    {
+      "url": "https://api.github.com/repos/cli/cli/issues/14145",
+      "repository_url": "https://api.github.com/repos/cli/cli",
+      "labels_url": "https://api.github.com/repos/cli/cli/issues/14145/labels{/name}",
+      "comments_url": "https://api.github.com/repos/cli/cli/issues/14145/comments",
+      "events_url": "https://api.github.com/repos/cli/cli/issues/14145/events",
+      "html_url": "https://github.com/cli/cli/issues/14145",
+      "id": 5148209954,
+      "node_id": "I_kwDODKw3uc8AAAABMttzIg",
+      "number": 14145,
+      "title": "Ls",
+      "user": {
+        "login": "tsyysshy6-gif",
+        "id": 316064101,
+        "node_id": "U_kgDOEtbBZQ",
+        "avatar_url": "https://avatars.githubusercontent.com/u/316064101?v=4",
+        "gravatar_id": "",
+        "url": "https://api.github.com/users/tsyysshy6-gif",
+        "html_url": "https://github.com/tsyysshy6-gif",
+        "followers_url": "https://api.github.com/users/tsyysshy6-gif/followers",
+        "following_url": "https://api.github.com/users/tsyysshy6-gif/following{/other_user}",
+        "gists_url": "https://api.github.com/users/tsyysshy6-gif/gists{/gist_id}",
+        "starred_url": "https://api.github.com/users/tsyysshy6-gif/starred{/owner}{/repo}",
+        "subscriptions_url": "https://api.github.com/users/tsyysshy6-gif/subscriptions",
+        "organizations_url": "https://api.github.com/users/tsyysshy6-gif/orgs",
+        "repos_url": "https://api.github.com/users/tsyysshy6-gif/repos",
+        "events_url": "https://api.github.com/users/tsyysshy6-gif/events{/privacy}",
+        "received_events_url": "https://api.github.com/users/tsyysshy6-gif/received_events",
+        "type": "User",
+        "user_view_type": "public",
+        "site_admin": false
+      },
+      "labels": [
+        {
+          "id": 3490675323,
+          "node_id": "LA_kwDODKw3uc7QD3p7",
+          "url": "https://api.github.com/repos/cli/cli/labels/needs-triage",
+          "name": "needs-triage",
+          "color": "D6393F",
+          "default": false,
+          "description": "needs to be reviewed"
+        }
+      ],
+      "state": "open",
+      "locked": false,
+      "assignees": [
+
+      ],
+      "milestone": null,
+      "comments": 0,
+      "created_at": "2026-08-14T04:09:27Z",
+      "updated_at": "2026-08-14T04:09:36Z",
+      "closed_at": null,
+      "assignee": null,
+      "author_association": "NONE",
+      "issue_field_values": [
+
+      ],
+      "type": null,
+      "active_lock_reason": null,
+      "sub_issues_summary": {
+        "total": 0,
+        "completed": 0,
+        "percent_completed": 0
+      },
+      "issue_dependencies_summary": {
+        "blocked_by": 0,
+        "total_blocked_by": 0,
+        "blocking": 0,
+        "total_blocking": 0
+      },
+      "body": "<!-- See [CONTRIBUTING.md](../CONTRIBUTING.md#proposing-a-design) for more information.-->\n\n### Link to issue for design submission\n\n<!-- \nProvide a link to the issue this design is for.\n\nAll design submissions must be linked to an open issue that\nhas both the `needs-design` and `help-wanted` labels.\n-->\n\n### Proposed Design\n\n<!--\nDescribe the design you are proposing to resolve the issue.\n\nAll CLI designs must adhere to the [Primer CLI design reference](https://primer.style/cli/).\n-->\n\n### Mockup\n\n<!--\nProvide a mockup of the design you are proposing. All mockups should clearly illustrate the command(s) being run and the expected output(s). \n\nWhen color and formatting are important, consider using our [CLI design Google Docs Template](https://docs.google.com/document/d/1JIRErIUuJ6fTgabiFYfCH3x91pyHuytbfa0QLnTfXKM/edit#heading=h.or54sa47ylpg).\n\nCode blocks can also be used to submit a design mockup - remember to include the command(s) being run. Example:\n\n```shell\n$ gh issue list --json title -L 5\n[\n  {\n    \"title\": \"`gh pr checks <pr> --required` should not fail when there are no required checks\"\n  },\n  {\n    \"title\": \"gh pr view commits should include commit description\"\n  },\n  {\n    \"title\": \"Adapt the color of the device code to the color used by the terminal\"\n  },\n  {\n    \"title\": \"`gh pr create` does not default to fork when user has write access to upstream\"\n  },\n  {\n    \"title\": \"First party discussions support\"\n  }\n]\n```\n-->",
+      "reactions": {
+        "url": "https://api.github.com/repos/cli/cli/issues/14145/reactions",
+        "total_count": 0,
+        "+1": 0,
+        "-1": 0,
+        "laugh": 0,
+        "hooray": 0,
+        "confused": 0,
+        "heart": 0,
+        "rocket": 0,
+        "eyes": 0
+      },
+      "timeline_url": "https://api.github.com/repos/cli/cli/issues/14145/timeline",
+      "performed_via_github_app": null,
+      "state_reason": null,
+      "pinned_comment": null,
+      "score": 1.0
+    }
+  ],
+  "search_type": "lexical"
+}

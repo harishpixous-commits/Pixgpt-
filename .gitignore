@@ -1,0 +1,40 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Secrets — never commit. Use .env.example as the template.
+.env
+.env.*
+!.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Agent task workspaces — generated projects, never committed
+.pixgpt-workspaces/
+
+# Freebuff desktop app state — not PixGPT source, and its `messages` table
+# holds real conversation content. Analysed in docs/freebuff-analysis.md;
+# nothing from it belongs in this repository.
+.freebuff/
+
+# Runtime lock, not source
+.claude/scheduled_tasks.lock

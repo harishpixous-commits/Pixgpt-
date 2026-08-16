@@ -1,0 +1,119 @@
+/* ============================================================
+   PixGPT design tokens — Pixous Technologies
+   Semantic tokens for light & dark themes. Never hardcode
+   colors in components; use these variables.
+
+   Every text/background pairing below is verified against WCAG
+   2.1 AA (4.5:1 for body text, 3:1 for UI graphics). Two
+   consequences worth knowing before editing:
+
+   1. `--primary-contrast` is the text/icon colour that sits ON a
+      primary fill, and it differs per theme. A green vivid enough
+      to read as the Pixous brand on a dark UI cannot carry white
+      text at AA (#0aa869 + white is only 3.1:1), so dark mode
+      puts deep navy on the green instead — 6.2:1, and it mirrors
+      the navy-and-green of the logo itself. Light mode's primary
+      is deep enough to carry white (5.8:1).
+   2. Muted text is the tightest pairing in the system. If you
+      lighten a surface, re-check `--text-muted` against it.
+   ============================================================ */
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SFMono-Regular', 'Cascadia Code', Consolas, 'JetBrains Mono', Menlo, monospace;
+
+  /* Brand (inspired by the Pixous logo: green + teal dots) */
+  --primary: #0aa869;
+  --primary-hover: #0fbf77;
+  --primary-active: #0a9a63;
+  /* Deep navy on green — 6.21:1 (white would be 3.08:1) */
+  --primary-contrast: #0a0f1c;
+  --secondary: #2bb3a3;
+  --lime: #a8e063;
+  --success: #34d399;
+  --warning: #f59e0b;
+  --error: #f87171;
+
+  /* Surfaces */
+  --background: #0a0f1c;
+  --surface: #0f1729;
+  --surface-hover: #16213a;
+  --surface-active: #1b2944;
+  --surface-elevated: #131f38;
+  --border: rgba(148, 163, 184, 0.14);
+  --border-strong: rgba(148, 163, 184, 0.28);
+  --overlay: rgba(3, 7, 18, 0.62);
+
+  /* Text — muted verified ≥4.6:1 on every surface above */
+  --text-primary: #eef2fa;
+  --text-secondary: #a9b6cc;
+  --text-muted: #8592a7;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.5);
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+
+  /* Code surfaces stay dark in both themes (as GitHub and ChatGPT do),
+     so these are defined once rather than per-theme. */
+  --code-bg: #0d1117;
+  --code-head-bg: #161b22;
+  --code-border: rgba(240, 246, 252, 0.1);
+  --code-muted: #8b949e;
+  --code-muted-hover: #e6edf3;
+
+  /* Avatar gradient: deep enough for white initials in both themes (5.3:1) */
+  --avatar-from: #0b6b4e;
+  --avatar-to: #12786e;
+
+  /* Type scale — chat content; overridden by the Appearance setting */
+  --chat-font-size: 15px;
+
+  /* Layout */
+  --sidebar-width: 280px;
+  --header-height: 56px;
+  --composer-max: 760px;
+  --chat-max: 760px;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  /* Deep enough to carry white text on a primary fill (5.83:1) and to
+     pass as accent text on the light surfaces (5.44:1) */
+  --primary: #067448;
+  --primary-hover: #078653;
+  --primary-active: #05603c;
+  --primary-contrast: #ffffff;
+  --secondary: #129a8c;
+  --lime: #65a30d;
+  --success: #107937;
+  --warning: #9d5604;
+  --error: #cc2121;
+
+  --background: #f5f7fa;
+  --surface: #ffffff;
+  --surface-hover: #eef2f7;
+  --surface-active: #e6ebf3;
+  --surface-elevated: #ffffff;
+  --border: rgba(15, 23, 42, 0.1);
+  --border-strong: rgba(15, 23, 42, 0.2);
+  --overlay: rgba(15, 23, 42, 0.4);
+
+  --text-primary: #0f1a2e;
+  --text-secondary: #42536e;
+  --text-muted: #5b6982;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.1);
+  --shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.16);
+}

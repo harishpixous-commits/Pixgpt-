@@ -1,0 +1,572 @@
+/* ============================================================
+   Models panel
+   ------------
+   Existing PixGPT tokens only — see tokens.css. Every animated
+   property is disabled under prefers-reduced-motion.
+
+   Contrast note: status text here is small and often bold, so it
+   needs 4.5:1. Tints are mixed into --surface rather than into
+   `transparent`, because mixing with transparent lets the panel
+   backdrop through and *lightens* it in dark mode, which is what
+   pushed the Skills badges to 4.38:1.
+   ============================================================ */
+
+.models-dialog {
+  max-width: 820px;
+  max-height: min(88dvh, 840px);
+}
+
+.models-dialog .dialog-head h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.models-subtitle {
+  margin: 3px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* ---------- tabs ---------- */
+
+.models-tabbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.models-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.models-tab {
+  position: relative;
+  padding: 8px 12px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.models-tab:hover {
+  color: var(--text-primary);
+}
+
+.models-tab-active {
+  color: var(--primary);
+}
+
+.models-tab-active::after {
+  content: '';
+  position: absolute;
+  inset: auto 8px -1px;
+  height: 2px;
+  background: var(--primary);
+  border-radius: 2px 2px 0 0;
+}
+
+.models-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- controls ---------- */
+
+.models-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.models-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.models-search:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.models-search svg {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.models-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 0;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  outline: none;
+}
+
+.models-search input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.models-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.models-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 0 11px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.models-chip:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.models-chip-active {
+  color: var(--primary-contrast);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+/* No opacity: dimming the secondary text drops 11px type below 4.5:1. */
+.models-chip-count {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+}
+
+/* ---------- body ---------- */
+
+/*
+ * The panel, not this wrapper, is the scroll container — it carries the
+ * tabpanel role and a tabindex, so the scrollable region is keyboard-reachable
+ * and properly named rather than being an anonymous scrolling div.
+ */
+.models-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.models-panel {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 8px 20px 12px;
+}
+
+.models-panel:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.models-loading {
+  flex: 1;
+}
+
+.models-loading,
+.models-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.models-task {
+  margin: 6px 0 4px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.models-task-reason {
+  color: var(--text-muted);
+}
+
+.models-group {
+  margin-top: 14px;
+}
+
+.models-group-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 6px;
+  padding: 8px 0 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--surface-elevated);
+}
+
+.models-group-note {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.models-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ---------- rows ---------- */
+
+.model-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 12px;
+  padding: 9px 8px;
+  border-radius: var(--radius);
+  transition: background 0.14s ease;
+}
+
+.model-row:hover {
+  background: var(--surface-hover);
+}
+
+.model-row-star {
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+}
+
+.model-main {
+  min-width: 0;
+}
+
+.model-name-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.model-star {
+  flex: none;
+  color: var(--primary);
+}
+
+.model-name {
+  padding: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text-primary);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+button.model-name:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+button.model-name:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.model-id {
+  margin: 2px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+.model-why {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+/* ---------- badges ---------- */
+
+.model-verify {
+  padding: 1px 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border-radius: var(--radius-full);
+}
+
+.model-verify-ok {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+}
+
+.model-verify-warn {
+  color: var(--text-primary);
+  background: var(--surface-hover);
+  border: 1px solid var(--border-strong);
+}
+
+.model-verify-muted {
+  color: var(--text-muted);
+  background: var(--surface-hover);
+}
+
+.model-verify-error {
+  color: var(--error);
+  background: var(--surface-hover);
+}
+
+.model-tag {
+  padding: 1px 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.model-tag-warn {
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+
+.model-tier {
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.model-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ---------- detail ---------- */
+
+.model-detail {
+  overflow: hidden;
+}
+
+.model-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 14px;
+  margin: 8px 0 2px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.model-facts dt {
+  font-weight: 650;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.model-facts dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.model-doc {
+  font-style: italic;
+}
+
+.model-caps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.model-caps li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.model-caps li::before {
+  font-weight: 700;
+}
+
+.model-caps li.yes::before {
+  content: '\2713';
+  color: var(--primary);
+}
+
+.model-caps li.no::before {
+  content: '\00d7';
+  color: var(--text-muted);
+}
+
+.model-caps li.unknown::before {
+  content: '?';
+  color: var(--text-muted);
+}
+
+.model-caps em {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.models-note {
+  flex: 1;
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Motion clarifies here; it is not decoration, so it goes when asked */
+@media (prefers-reduced-motion: reduce) {
+  .models-chip,
+  .models-search,
+  .models-tab,
+  .model-row {
+    transition: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .model-facts {
+    grid-template-columns: 1fr;
+  }
+
+  .models-note {
+    display: none;
+  }
+}
+
+/* ---------- status ---------- */
+
+/*
+ * The status glyph. Given a fixed width so the names below it still line up —
+ * a column that jitters is harder to scan than no column at all.
+ *
+ * `aria-hidden` is deliberately NOT set: the glyph carries the row's state, and
+ * the `title` gives a screen reader the sentence behind it.
+ */
+.model-mark {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+}
+
+.model-mark-ok {
+  color: var(--primary);
+}
+
+.model-mark-error {
+  color: var(--error);
+}
+
+/* Muted, not warning-coloured: "not yet tried" is not a fault. */
+.model-mark-muted {
+  color: var(--text-muted);
+}
+
+.models-chip-status {
+  font-variant-numeric: tabular-nums;
+}
+
+.models-chip:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.models-chip:disabled:hover {
+  background: var(--surface);
+  color: var(--text-secondary);
+}
+
+/* ---------- favourites and current selection ---------- */
+
+.model-fav {
+  color: var(--text-muted);
+}
+
+.model-fav-on {
+  color: var(--primary);
+}
+
+/*
+ * The row you are actually using. A left rule rather than a fill: it reads at
+ * a glance down the list without competing with the ✓/⚠/✕ status column.
+ */
+.model-row-selected {
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  box-shadow: inset 2px 0 0 var(--primary);
+}
+
+.model-tag-current {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  font-weight: 700;
+}
