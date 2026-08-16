@@ -23,7 +23,7 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -61,26 +61,49 @@ jobs:
             echo "::error::SSM send-command failed ($RC): $ERR"
             exit $RC
           fi
-          CMD="$ERR"
+          # Trim any stray whitespace/CR so the value is a clean UUID.
+          CMD="$(echo "$ERR" | tr -d '\r\n')"
           echo "command_id=$CMD" >> "$GITHUB_OUTPUT"
 
       - name: Wait for the deploy to finish
         env:
           CMD: ${{ steps.deploy.outputs.command_id }}
           INSTANCE: ${{ steps.instance.outputs.instance_id }}
+          SHA: ${{ github.sha }}
         run: |
           # AWS CLI exits 254 while the invocation is still registering; the
           # polling loop must tolerate that instead of dying under `-e`.
           set +e
+
+          # The command ID from the Trigger step occasionally does not
+          # propagate through $GITHUB_OUTPUT. Recover it by the unique SHA
+          # comment instead, so the Wait step never polls an empty ID.
+          if [ -z "$CMD" ] || [ "$CMD" = "None" ]; then
+            for j in $(seq 1 6); do
+              CMD=$(aws ssm list-commands --region us-east-1 --max-items 40 \
+                --query "Commands[?Comment == 'Auto-deploy $SHA'] | sort_by(@, &RequestedDateTime) | reverse(@) | [0].CommandId" \
+                --output text 2>/dev/null)
+              [ -n "$CMD" ] && [ "$CMD" != "None" ] && break
+              sleep 10
+            done
+            echo "Recovered command ID by comment: $CMD"
+          fi
+          echo "polling command=$CMD instance=$INSTANCE"
+
           sleep 10
+          LAST=""
           for i in $(seq 1 60); do
             STATUS=$(aws ssm get-command-invocation --command-id "$CMD" --instance-id "$INSTANCE" \
               --region us-east-1 --query 'Status' --output text 2>/dev/null)
             RC=$?
             if [ $RC -ne 0 ] || [ -z "$STATUS" ]; then
-              echo "invocation not ready yet ($RC) — retrying ($i/60)"
+              echo "invocation not ready yet (rc=$RC) ($i/60)"
               sleep 10
               continue
+            fi
+            if [ "$STATUS" != "$LAST" ]; then
+              echo "status=$STATUS ($i/60)"
+              LAST="$STATUS"
             fi
             case "$STATUS" in
               Success)
@@ -96,8 +119,7 @@ jobs:
                 exit 1
                 ;;
             esac
-            echo "waiting... status=$STATUS ($i/60)"
             sleep 15
           done
-          echo "Timed out waiting for the deploy to complete"
+          echo "::error::Timed out waiting for deploy. CMD='$CMD' INSTANCE='$INSTANCE' last status='$LAST'"
           exit 1
