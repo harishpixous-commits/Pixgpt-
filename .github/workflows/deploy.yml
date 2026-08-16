@@ -1,0 +1,79 @@
+name: Deploy PixGPT to AWS
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - '.gitignore'
+  workflow_dispatch:
+
+# The OIDC token is needed so the job can assume the AWS deploy role
+# (arn:aws:iam::276699357742:role/pixgpt-gh-deploy) without any stored keys.
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::276699357742:role/pixgpt-gh-deploy
+          aws-region: us-east-1
+
+      - name: Find the PixGPT instance
+        id: instance
+        run: |
+          ID=$(aws ec2 describe-instances --region us-east-1 \
+            --filters "Name=tag:Name,Values=PixGPT" "Name=instance-state-name,Values=running" \
+            --query 'Reservations[0].Instances[0].InstanceId' --output text)
+          echo "Found instance: $ID"
+          echo "instance_id=$ID" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger deploy on EC2 via SSM
+        id: deploy
+        run: |
+          CMD=$(aws ssm send-command \
+            --instance-ids "${{ steps.instance.outputs.instance_id }}" \
+            --document-name AWS-RunShellScript \
+            --region us-east-1 \
+            --comment "Auto-deploy ${{ github.sha }}" \
+            --parameters 'commands=["cd /opt/pixgpt && bash scripts/ec2-deploy.sh"]' \
+            --query 'Command.CommandId' --output text)
+          echo "SSM command: $CMD"
+          echo "command_id=$CMD" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for the deploy to finish
+        env:
+          CMD: ${{ steps.deploy.outputs.command_id }}
+          INSTANCE: ${{ steps.instance.outputs.instance_id }}
+        run: |
+          sleep 10
+          for i in $(seq 1 40); do
+            STATUS=$(aws ssm get-command-invocation --command-id "$CMD" --instance-id "$INSTANCE" \
+              --region us-east-1 --query 'Status' --output text)
+            case "$STATUS" in
+              Success)
+                echo "=== deploy succeeded ==="
+                aws ssm get-command-invocation --command-id "$CMD" --instance-id "$INSTANCE" \
+                  --region us-east-1 --query 'StandardOutputContent' --output text
+                exit 0
+                ;;
+              Failed|Cancelled|TimedOut|DeliveryTimedOut)
+                echo "=== deploy $STATUS ==="
+                aws ssm get-command-invocation --command-id "$CMD" --instance-id "$INSTANCE" \
+                  --region us-east-1 --query 'StandardErrorContent' --output text
+                exit 1
+                ;;
+            esac
+            echo "waiting... status=$STATUS ($i/40)"
+            sleep 15
+          done
+          echo "Timed out waiting for the deploy to complete"
+          exit 1
