@@ -375,7 +375,7 @@ export function createClient(adapter, cfg, log, hooks = {}) {
             streamed: error.streamed ?? 0,
             detail: error.detail,
           })
-          throw error
+          throw visionFailure(request, error)
         }
         log.warn('stream failed, falling back', {
           gateway: adapter.id,
@@ -385,7 +385,7 @@ export function createClient(adapter, cfg, log, hooks = {}) {
         })
       }
     }
-    throw lastError ?? gatewayError('provider_error', 'no models attempted')
+    throw visionFailure(request, lastError ?? gatewayError('provider_error', 'no models attempted'))
   }
 
   /*
@@ -400,6 +400,25 @@ export function createClient(adapter, cfg, log, hooks = {}) {
    */
   const shouldContinueChain = (error) =>
     error.retryable || error.code === 'invalid_api_key' || error.code === 'quota_exceeded'
+
+  /*
+   * A vision request has no compatible fallback outside vision (section 39), so
+   * when its whole chain fails the surfaced error is the last route's — often a
+   * bare `bad_request` from a model refusing the image, which reads as a generic
+   * validation failure. Make that legible while keeping the code unchanged, so
+   * the frontend and the health system classify it exactly as before.
+   */
+  const visionFailure = (request, error) => {
+    if (!request?.requiresVision) return error
+    if (error?.code === 'bad_request') {
+      return new GatewayError(
+        'bad_request',
+        'No vision-capable model could process this image right now. Please try again later.',
+        { status: 400, retryable: false },
+      )
+    }
+    return error
+  }
 
   async function completion(request, clientSignal) {
     const { chain, meta } = buildChain(request.model, {
@@ -432,7 +451,7 @@ export function createClient(adapter, cfg, log, hooks = {}) {
         lastError = error
         if (error.code === 'client_closed') throw error
         report(candidate, { ok: false, ms: Date.now() - started, error, via: 'completion' })
-        if (!shouldContinueChain(error) || index === chain.length - 1) throw error
+        if (!shouldContinueChain(error) || index === chain.length - 1) throw visionFailure(request, error)
         log.warn('completion failed, falling back', {
           gateway: adapter.id,
           from: candidate,
@@ -441,7 +460,7 @@ export function createClient(adapter, cfg, log, hooks = {}) {
         })
       }
     }
-    throw lastError
+    throw visionFailure(request, lastError)
   }
 
   /* ---------- catalogue + health ---------- */

@@ -85,6 +85,10 @@ before(async () => {
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end('{"choices":[{"oops":'); return
 
+      case 'reject-image': // a route that refuses the image with a bare 400
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ error: { message: 'image_url is not supported' } })); return
+
       default:
         sse(); token(`[${model}] ok`); res.write('data: [DONE]\n\n'); res.end(); return
     }
@@ -312,5 +316,17 @@ describe('capability-aware fallback (vision must not downgrade)', () => {
       (e) => e.code === 'provider_error',
     )
     assert.equal(tokens.join(''), '', 'the text-only fallback answer must never appear')
+  })
+
+  test('a vision request whose route refuses the image surfaces a legible message', async () => {
+    const c = client({ fallbackModels: ['normal'], visionFallbackModels: [] })
+    await assert.rejects(
+      () =>
+        c.completion(
+          { model: 'reject-image', requiresVision: true, messages: [{ role: 'user', content: 'x' }] },
+          undefined,
+        ),
+      (e) => e.code === 'bad_request' && /No vision-capable model/.test(e.message),
+    )
   })
 })

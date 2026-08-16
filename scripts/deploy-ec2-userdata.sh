@@ -72,16 +72,23 @@ npm run build
 
 # Production gateway config. Non-secret values mirror the local .env; the
 # base URL default (http://127.0.0.1:20128/v1) is what OmniRoute listens on.
+#
+# The vision alias points at OmniRoute's best-vision route rather than bare
+# `auto`: `auto` picks premium pools (aug/tllm) that need credentials this
+# deployment does not have, so it hangs for ~60s, while auto/best-vision
+# resolves to the working free pool instantly. VISION_FALLBACK_MODELS stays
+# empty on purpose — falling back from a vision request to a text-only model
+# turns "describe this image" into a request the route cannot satisfy.
 cat > /opt/pixgpt/.env <<'EOF'
 PORT=80
 OMNIROUTE_BASE_URL=http://127.0.0.1:20128/v1
 OMNIROUTE_TIMEOUT_MS=60000
 OMNIROUTE_HEALTH_PATH=/api/health/ping
-OMNIROUTE_FALLBACK_MODELS=auto
+OMNIROUTE_MODEL_VISION=auto/best-vision
+OMNIROUTE_FALLBACK_MODELS=auto/fast
 LOG_LEVEL=info
 PIXGPT_VISION_ALIASES=pixgpt-vision
-OMNIROUTE_VISION_FALLBACK_MODELS=ddgw/claude-haiku-4-5,auto/vision,auto/pro-vision
-WEB_SEARCH_PROVIDER=duckduckgo
+WEB_SEARCH_PROVIDER=wikipedia
 EOF
 
 cat > /etc/systemd/system/pixgpt.service <<'EOF'
