@@ -1,8 +1,10 @@
 #!/bin/bash
 # PixGPT EC2 bootstrap (Amazon Linux 2023 user-data).
-# Builds the app in demo mode (VITE_PIXGPT_DEMO=1) so the live site is fully
-# functional without a private AI gateway. Swap the build line for a real
-# gateway-backed deploy once a server-side gateway is configured.
+# Full production stack:
+#   1. OmniRoute (the AI gateway) — config pulled from the private S3 bucket
+#   2. PixGPT built WITHOUT demo mode so it talks to the real gateway
+# The config bucket holds ~/.omniroute contents (storage.sqlite + .env) that
+# the instance role (pixgpt-ssm-role) is allowed to read.
 exec > /var/log/pixgpt-bootstrap.log 2>&1
 set -e
 
@@ -34,20 +36,62 @@ fi
 node --version
 npm --version
 
+# ---- OmniRoute: the AI gateway PixGPT talks to on 127.0.0.1:20128 ----
+npm install -g omniroute@3.8.49
+BUCKET=pixgpt-omniroute-config-276699357742
+mkdir -p /root/.omniroute
+aws s3 cp s3://$BUCKET/omniroute/storage.sqlite /root/.omniroute/storage.sqlite
+aws s3 cp s3://$BUCKET/omniroute/.env /root/.omniroute/.env
+ls -la /root/.omniroute
+
+cat > /etc/systemd/system/omniroute.service <<'EOF'
+[Unit]
+Description=OmniRoute AI gateway
+After=network.target
+
+[Service]
+WorkingDirectory=/root
+ExecStart=/usr/lib/nodejs22/bin/omniroute
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable omniroute
+systemctl start omniroute
+
+# ---- PixGPT ----
 git clone --depth 1 https://github.com/harishpixous-commits/Pixgpt-.git /opt/pixgpt
 cd /opt/pixgpt
 
 npm ci --no-audit --no-fund
-VITE_PIXGPT_DEMO=1 npm run build
+npm run build
+
+# Production gateway config. Non-secret values mirror the local .env; the
+# base URL default (http://127.0.0.1:20128/v1) is what OmniRoute listens on.
+cat > /opt/pixgpt/.env <<'EOF'
+PORT=80
+OMNIROUTE_BASE_URL=http://127.0.0.1:20128/v1
+OMNIROUTE_TIMEOUT_MS=60000
+OMNIROUTE_HEALTH_PATH=/api/health/ping
+OMNIROUTE_FALLBACK_MODELS=auto
+LOG_LEVEL=info
+PIXGPT_VISION_ALIASES=pixgpt-vision
+OMNIROUTE_VISION_FALLBACK_MODELS=ddgw/claude-haiku-4-5,auto/vision,auto/pro-vision
+WEB_SEARCH_PROVIDER=duckduckgo
+EOF
 
 cat > /etc/systemd/system/pixgpt.service <<'EOF'
 [Unit]
 Description=PixGPT web app (API + static)
-After=network.target
+After=network.target omniroute.service
 
 [Service]
 WorkingDirectory=/opt/pixgpt
-Environment=PORT=80
+EnvironmentFile=/opt/pixgpt/.env
 ExecStart=/usr/bin/node server/index.mjs
 Restart=always
 RestartSec=3

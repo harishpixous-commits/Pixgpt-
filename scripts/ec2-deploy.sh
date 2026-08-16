@@ -1,6 +1,6 @@
 #!/bin/bash
 # Runs ON the EC2 instance (invoked by GitHub Actions via SSM Run Command).
-# Pulls the latest main, rebuilds, restarts the service, and verifies.
+# Pulls the latest main, rebuilds, restarts the services, and verifies.
 set -euo pipefail
 
 cd /opt/pixgpt
@@ -12,13 +12,19 @@ echo "HEAD=$(git rev-parse --short HEAD)"
 
 npm ci --no-audit --no-fund
 
-# Demo build: fully functional without a private AI gateway.
-# Swap for `npm run build` + a server-side .env when a gateway is configured.
-VITE_PIXGPT_DEMO=1 npm run build
+# Production build — talks to the real OmniRoute gateway (never demo mode).
+# The gateway is a separate service; the build does not need it, only the
+# running server does.
+npm run build
+
+# Make sure the AI gateway is up before the app (config lives in
+# /root/.omniroute, fetched at bootstrap and not touched by deploys).
+systemctl is-active --quiet omniroute || systemctl start omniroute
 
 systemctl restart pixgpt
 sleep 3
 
-echo "service=$(systemctl is-active pixgpt)"
+echo "services: omniroute=$(systemctl is-active omniroute) pixgpt=$(systemctl is-active pixgpt)"
 curl -fsS -o /dev/null -w "http=%{http_code}\n" http://localhost/ || echo "http=failed"
+curl -fsS --max-time 10 http://localhost/api/health || echo "health=failed"
 echo "=== deploy done $(date -u) ==="
