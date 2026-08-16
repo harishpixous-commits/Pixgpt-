@@ -55,14 +55,23 @@ jobs:
       - name: Trigger deploy on EC2 via SSM
         id: deploy
         run: |
-          CMD=$(aws ssm send-command \
+          set +e
+          ERR=$(aws ssm send-command \
             --instance-ids "${{ steps.instance.outputs.instance_id }}" \
             --document-name AWS-RunShellScript \
             --region us-east-1 \
             --comment "Auto-deploy ${{ github.sha }}" \
             --parameters 'commands=["cd /opt/pixgpt && bash scripts/ec2-deploy.sh"]' \
-            --query 'Command.CommandId' --output text)
-          echo "SSM command: $CMD"
+            --query 'Command.CommandId' --output text 2>&1)
+          RC=$?
+          set -e
+          echo "SSM rc=$RC"
+          echo "SSM output: $ERR"
+          if [ $RC -ne 0 ]; then
+            echo "::error::SSM send-command failed ($RC): $ERR"
+            exit $RC
+          fi
+          CMD="$ERR"
           echo "command_id=$CMD" >> "$GITHUB_OUTPUT"
 
       - name: Wait for the deploy to finish
