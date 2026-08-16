@@ -51,7 +51,7 @@ jobs:
             --document-name AWS-RunShellScript \
             --region us-east-1 \
             --comment "Auto-deploy ${{ github.sha }}" \
-            --parameters 'commands=["cd /opt/pixgpt && bash scripts/ec2-deploy.sh"]' \
+            --parameters 'commands=["cd /opt/pixgpt && git fetch origin main && git checkout --force FETCH_HEAD && bash scripts/ec2-deploy.sh"]' \
             --query 'Command.CommandId' --output text 2>&1)
           RC=$?
           set -e
