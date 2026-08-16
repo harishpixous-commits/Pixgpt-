@@ -73,7 +73,11 @@ export function MessageList() {
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ type: 'spring', stiffness: 420, damping: 34 }}
               >
-                {m.role === 'user' ? <UserMessage message={m} /> : <AIMessage convId={conv!.id} message={m} />}
+                {m.role === 'user' ? (
+                  <UserMessage message={m} />
+                ) : (
+                  <AIMessage convId={conv!.id} requested={conv!.model} message={m} />
+                )}
               </motion.div>
             ))}
           </AnimatePresence>

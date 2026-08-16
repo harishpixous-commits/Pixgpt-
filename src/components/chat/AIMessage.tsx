@@ -4,7 +4,9 @@ import { AlertTriangle, RefreshCw } from 'lucide-react'
 import { StreamingIndicator } from './StreamingIndicator'
 import { MessageActions } from './MessageActions'
 import { usePixGptStore } from '../../lib/store'
-import type { ChatMessage } from '../../lib/types'
+import { MODELS } from '../../lib/models'
+import { isModelAlias } from '../../lib/types'
+import type { ChatMessage, ModelId } from '../../lib/types'
 
 // Markdown pulls in react-markdown, katex, and syntax highlighting —
 // load it only when a response actually needs rendering.
@@ -12,6 +14,8 @@ const Markdown = lazy(() => import('./Markdown').then((m) => ({ default: m.Markd
 
 interface AIMessageProps {
   convId: string
+  /** What the user actually asked for — an alias like `pixgpt-pro` or a pinned catalogue id. */
+  requested: ModelId
   message: ChatMessage
 }
 
@@ -30,10 +34,17 @@ const ERROR_TITLES: Record<string, string> = {
   unsupported: 'Not supported',
 }
 
-export function AIMessage({ convId, message }: AIMessageProps) {
+export function AIMessage({ convId, requested, message }: AIMessageProps) {
   const retryLast = usePixGptStore((s) => s.retryLast)
   const isStreaming = message.status === 'streaming'
   const hasError = message.status === 'error'
+
+  /*
+   * A human label for the model that was asked for. Aliases get their friendly
+   * name ("PixGPT Pro"); a pinned catalogue id is shown as-is, since that is
+   * what the user typed/selected.
+   */
+  const requestedLabel = isModelAlias(requested) ? MODELS[requested].label : requested
 
   return (
     <div className="msg-row msg-row-ai">
@@ -71,7 +82,7 @@ export function AIMessage({ convId, message }: AIMessageProps) {
             */}
             {message.fellBack && message.servedBy ? (
               <p className="msg-served">
-                Answered by <strong>{message.servedBy}</strong> — the model you selected was unavailable.
+                Answered by <strong>{message.servedBy}</strong> — {requestedLabel} was unavailable, using a fallback.
               </p>
             ) : null}
             {message.sources && message.sources.length > 0 ? (
