@@ -32,8 +32,12 @@ export interface ChatAPI {
     signal: AbortSignal,
     onToken: (token: string) => void,
     onSource?: (source: SourceRef) => void,
-    /** Fires once the answer completes, with the model that actually served it. */
-    onDone?: (info: { model?: string; fellBack?: boolean }) => void,
+    /**
+     * Fires once the answer completes, with the model that actually served it.
+     * `truncated` is true when the model stopped at its output ceiling, so the
+     * UI can offer to continue instead of presenting a cut-off answer as done.
+     */
+    onDone?: (info: { model?: string; fellBack?: boolean; truncated?: boolean }) => void,
   ): Promise<void>
   uploadAttachment(
     file: File,
@@ -383,6 +387,8 @@ const httpStreamCompletion: ChatAPI['streamCompletion'] = async (request, signal
             /** `done` carries the route that actually answered. */
             model?: string
             fellBack?: boolean
+            /** True when the model hit its output ceiling mid-answer. */
+            truncated?: boolean
           }
           try {
             event = JSON.parse(payload)
@@ -396,7 +402,11 @@ const httpStreamCompletion: ChatAPI['streamCompletion'] = async (request, signal
           } else if (event.type === 'done') {
             // The server names the route that actually answered; it is not
             // always the one requested, and the UI has to be able to say so.
-            onDone?.({ model: event.model, fellBack: Boolean(event.fellBack) })
+            onDone?.({
+              model: event.model,
+              fellBack: Boolean(event.fellBack),
+              truncated: Boolean(event.truncated),
+            })
           } else if (event.type === 'error') streamError = toError(event.code, event.message)
           // Unknown event types are ignored on purpose, so the server can add
           // new ones (tool_call, status…) without breaking older clients.

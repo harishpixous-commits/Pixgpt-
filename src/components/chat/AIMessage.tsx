@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { AlertTriangle, ChevronsDown, RefreshCw } from 'lucide-react'
 import { StreamingIndicator } from './StreamingIndicator'
 import { MessageActions } from './MessageActions'
 import { usePixGptStore } from '../../lib/store'
@@ -36,6 +36,7 @@ const ERROR_TITLES: Record<string, string> = {
 
 export function AIMessage({ convId, requested, message }: AIMessageProps) {
   const retryLast = usePixGptStore((s) => s.retryLast)
+  const continueFrom = usePixGptStore((s) => s.continueFrom)
   const isStreaming = message.status === 'streaming'
   const hasError = message.status === 'error'
 
@@ -80,6 +81,21 @@ export function AIMessage({ convId, requested, message }: AIMessageProps) {
               while something else wrote the reply — and the only clue is the
               model contradicting itself when asked what it is.
             */}
+            {message.truncated && !isStreaming && !hasError ? (
+              <div className="msg-truncated">
+                <p className="msg-truncated-note">
+                  <ChevronsDown size={14} aria-hidden="true" />
+                  The answer hit the model's output limit and was cut off here.
+                </p>
+                <button
+                  type="button"
+                  className="msg-truncated-continue"
+                  onClick={() => continueFrom(convId, message.id)}
+                >
+                  Continue writing
+                </button>
+              </div>
+            ) : null}
             {message.fellBack && message.servedBy ? (
               <p className="msg-served">
                 Answered by <strong>{message.servedBy}</strong> — {requestedLabel} was unavailable, using a fallback.

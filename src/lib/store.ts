@@ -156,6 +156,8 @@ interface PixGptState {
   stopStreaming: () => void
   retryLast: (convId: string) => Promise<void>
   regenerateFrom: (convId: string, assistantMessageId: string) => Promise<void>
+  /** Continues a response the model cut off at its output ceiling. */
+  continueFrom: (convId: string, assistantMessageId: string) => Promise<void>
   resetAll: () => void
 }
 
@@ -215,7 +217,7 @@ async function runStream(
   }
 
   /** Which route actually answered. Set from the stream's `done` event. */
-  let served: { model?: string; fellBack?: boolean } = {}
+  let served: { model?: string; fellBack?: boolean; truncated?: boolean } = {}
 
   const finish = (status: 'complete' | 'error', failure?: { message: string; code?: string }) => {
     flush()
@@ -241,6 +243,7 @@ async function runStream(
                       errorCode: failure?.code,
                       servedBy: served.model,
                       fellBack: served.fellBack,
+                      truncated: served.truncated,
                     }
                   : m,
               ),
@@ -569,6 +572,59 @@ export const usePixGptStore = create<PixGptState>()((set, get) => ({
       streaming: { convId, messageId: assistantMessage.id },
     }))
     await runStream(get, set, convId, assistantMessage.id, history, conv.model)
+  },
+
+  /**
+   * Continues a response the model cut off at its output ceiling.
+   *
+   * The truncated text stays in place and the stream appends to the same
+   * message, so the continuation reads as one answer rather than a second
+   * reply. The transcript sent upstream ends with a short "continue" turn
+   * (only in the request, never rendered), so the model knows to pick up where
+   * it stopped instead of repeating itself.
+   */
+  continueFrom: async (convId, assistantMessageId) => {
+    const state = get()
+    if (state.streaming) return
+    const conv = state.conversations.find((c) => c.id === convId)
+    if (!conv) return
+
+    const index = conv.messages.findIndex((m) => m.id === assistantMessageId)
+    if (index === -1) return
+    const target = conv.messages[index]
+    if (target.role !== 'assistant' || target.status !== 'complete') return
+
+    // Flip the message back to streaming so the live edge shows while it grows
+    set((s) => ({
+      conversations: s.conversations.map((c) =>
+        c.id === convId
+          ? {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === assistantMessageId ? { ...m, status: 'streaming', truncated: false } : m,
+              ),
+            }
+          : c,
+      ),
+      streaming: { convId, messageId: assistantMessageId },
+    }))
+
+    // Everything so far, ending with a hidden continue instruction. The partial
+    // assistant turn stays in the transcript so the model has its own words to
+    // resume from; the extra user turn exists only in the request.
+    // The partial assistant turn stays in the transcript so the model has its
+    // own words to resume from; the extra user turn exists only in the request.
+    const history: ChatMessage[] = [
+      ...conv.messages.slice(0, index + 1),
+      {
+        id: uid(),
+        role: 'user',
+        content: 'Please continue your previous answer from exactly where you stopped.',
+        createdAt: Date.now(),
+        status: 'complete',
+      },
+    ]
+    await runStream(get, set, convId, assistantMessageId, history, conv.model)
   },
 
   resetAll: () => {

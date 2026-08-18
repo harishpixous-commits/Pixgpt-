@@ -134,7 +134,15 @@ export function createClient(adapter, cfg, log, hooks = {}) {
   function buildBody({ model, messages, temperature, maxTokens, tools, stream }) {
     const body = { model, messages, stream }
     if (typeof temperature === 'number') body.temperature = temperature
-    if (typeof maxTokens === 'number') body.max_tokens = maxTokens
+    /*
+     * A provider that receives no max_tokens applies its own default output
+     * cap, and those defaults are often small enough to cut a long answer
+     * mid-sentence. Apply a sane ceiling unless the caller named one, so the
+     * model can actually finish what it started. Explicit caller values always
+     * win; a provider with its own lower cap clamps silently.
+     */
+    const ceiling = typeof maxTokens === 'number' ? maxTokens : cfg.defaultMaxTokens
+    if (typeof ceiling === 'number') body.max_tokens = ceiling
     if (Array.isArray(tools) && tools.length > 0 && adapter.capabilities.tools) body.tools = tools
     return adapter.buildBody ? adapter.buildBody(body, cfg) : body
   }
@@ -187,6 +195,8 @@ export function createClient(adapter, cfg, log, hooks = {}) {
         content: typeof content === 'string' ? content : '',
         toolCalls,
         finishReason: data?.choices?.[0]?.finish_reason ?? null,
+        /* The model stopped at its output ceiling: the answer is cut off. */
+        truncated: data?.choices?.[0]?.finish_reason === 'length',
         model: data?.model ?? model,
         usage: data?.usage,
       }
@@ -223,6 +233,7 @@ export function createClient(adapter, cfg, log, hooks = {}) {
 
     let streamed = 0
     let reportedModel = false
+    let finishReason = null
 
     try {
       const decoder = new TextDecoder()
@@ -241,7 +252,7 @@ export function createClient(adapter, cfg, log, hooks = {}) {
             if (!line.startsWith('data:')) continue
             const payload = line.slice(5).trim()
             if (!payload) continue
-            if (payload === '[DONE]') return { streamed }
+            if (payload === '[DONE]') return { streamed, finishReason }
 
             let parsed
             try {
@@ -265,6 +276,15 @@ export function createClient(adapter, cfg, log, hooks = {}) {
               onModel?.(parsed.model)
             }
 
+            /*
+             * The final frame carries finish_reason. `length` means the model
+             * stopped at its output ceiling — the answer is cut off, not
+             * finished, and the UI has to be able to say so instead of
+             * presenting a dangling sentence as complete.
+             */
+            const reason = parsed?.choices?.[0]?.finish_reason
+            if (typeof reason === 'string' && reason !== 'null') finishReason = reason
+
             const delta = adapter.extractDelta
               ? adapter.extractDelta(parsed)
               : parsed?.choices?.[0]?.delta?.content
@@ -275,7 +295,7 @@ export function createClient(adapter, cfg, log, hooks = {}) {
           }
         }
       }
-      return { streamed }
+      return { streamed, finishReason }
     } catch (error) {
       if (error instanceof GatewayError) throw Object.assign(error, { streamed })
       if (clientSignal?.aborted) {
@@ -354,11 +374,20 @@ export function createClient(adapter, cfg, log, hooks = {}) {
       try {
         log.debug('stream attempt', { gateway: adapter.id, model: candidate, attempt: index + 1, of: chain.length })
         const elsewhere = transportFor(candidate)
-        const { streamed } = elsewhere
+        const res = elsewhere
           ? await elsewhere.streamOne(candidate, request, clientSignal, onToken, onModel)
           : await streamOnce(candidate, request, clientSignal, onToken, onModel)
         report(candidate, { ok: true, ms: Date.now() - started, via: 'stream' })
-        return { model: candidate, routedTo: candidate, streamed, fellBack: index > 0, chain, routing: meta }
+        return {
+          model: candidate,
+          routedTo: candidate,
+          streamed: res.streamed,
+          finishReason: res.finishReason ?? null,
+          truncated: res.finishReason === 'length',
+          fellBack: index > 0,
+          chain,
+          routing: meta,
+        }
       } catch (error) {
         lastError = error
         const alreadyStreamed = (error.streamed ?? 0) > 0

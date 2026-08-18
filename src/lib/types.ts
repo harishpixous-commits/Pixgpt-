@@ -57,6 +57,13 @@ export interface ChatMessage {
    */
   servedBy?: string
   fellBack?: boolean
+  /**
+   * The model stopped at its output ceiling, so the answer is incomplete.
+   *
+   * Kept separate from `status: 'error'` — the request itself succeeded, but
+   * the response was cut short and the UI should say so and offer to continue.
+   */
+  truncated?: boolean
 }
 
 export interface Conversation {

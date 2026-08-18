@@ -42,3 +42,6 @@ hdr1
 
 # Runtime lock, not source
 .claude/scheduled_tasks.lock
+
+# Brochure build artefact (regenerate with node brochure/build.mjs)
+brochure/brochure.built.html

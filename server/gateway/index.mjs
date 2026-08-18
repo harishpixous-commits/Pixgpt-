@@ -151,6 +151,14 @@ export function resolveConfig(providerId) {
     connectTimeoutMs: intFrom(envFor(providerId, 'CONNECT_TIMEOUT_MS', undefined), 15_000),
     timeoutMs: intFrom(envFor(providerId, 'TIMEOUT_MS', undefined), 60_000),
     maxStreamMs: intFrom(envFor(providerId, 'MAX_STREAM_MS', undefined), 300_000),
+    /*
+     * Output ceiling applied when the client sends no max_tokens. Providers
+     * that get no ceiling apply their own default, which is often small enough
+     * to cut a long answer mid-sentence (finish_reason "length"). Naming a
+     * generous default lets a model finish what it started; a provider with a
+     * lower cap of its own clamps silently.
+     */
+    defaultMaxTokens: intFrom(envFor(providerId, 'DEFAULT_MAX_TOKENS', undefined), 8192),
     healthPath,
     defaultModel,
     defaultAlias: 'pixgpt-pro',

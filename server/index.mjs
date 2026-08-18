@@ -7,6 +7,7 @@ import { GatewayError } from './gateway/errors.mjs'
 import { aliasCapabilities, describeGateway, getGateway, modelSupportsVision } from './gateway/index.mjs'
 import { imageLimits } from './multimodal.mjs'
 import { renderSearchContext, runSearch, searchAvailable, searchStatus } from './websearch.mjs'
+import { chatSystemPrompt } from './chat-prompt.mjs'
 import { runAgent } from './agent/loop.mjs'
 import { APPROVAL, awaitApproval, createTask, deleteTask, getTask, listTasks, resolveApproval } from './agent/tasks.mjs'
 import { zipProject } from './agent/zip.mjs'
@@ -370,6 +371,22 @@ async function handleChat(req, res, signal, requestId) {
     ),
   }
 
+  /*
+   * Capability grounding. Without it the model is told nothing about the product
+   * it is answering as, and a vision model asked to edit an attached image
+   * assumes it can emit one — replying with a lead-in ("Please", "Here is the
+   * updated logo:") for a picture PixGPT never requested and cannot return. The
+   * text is derived from live capability flags, so it stays true if a generative
+   * backend is added later. Callers that supply their own system turn keep it.
+   */
+  const hasOwnSystemTurn = messages.some((m) => m.role === 'system')
+  if (!hasOwnSystemTurn) {
+    request.messages = [
+      { role: 'system', content: await chatSystemPrompt({ webSearch: searchAvailable() }) },
+      ...messages,
+    ]
+  }
+
   /**
    * Web grounding. Opt-in per request: the user enables it in the composer.
    * The server chooses the query (the last user turn) and performs every fetch —
@@ -388,11 +405,15 @@ async function handleChat(req, res, signal, requestId) {
     const found = await runSearch(query, { signal })
     sources = found.sources
     if (found.context) {
-      // Prepended as a system turn so it frames the answer without being
-      // mistaken for something the user typed.
+      /*
+       * Appended after the capability prompt rather than replacing the message
+       * list, so grounding context and the capability rules coexist — building
+       * from `messages` here would drop the system turn added just above.
+       */
       request.messages = [
+        ...request.messages.filter((m) => m.role === 'system'),
         { role: 'system', content: renderSearchContext(query, found.context) },
-        ...messages,
+        ...messages.filter((m) => m.role !== 'system'),
       ]
     }
     log.info('web grounding applied', { requestId, sources: sources.length })
@@ -426,6 +447,8 @@ async function handleChat(req, res, signal, requestId) {
       model: result.model,
       gateway,
       fellBack: result.fellBack,
+      /* The model stopped at its output ceiling; the answer is incomplete. */
+      truncated: Boolean(result.truncated),
       routing: safeRouting(result),
       ...(sources.length > 0 ? { sources } : {}),
     })
@@ -461,7 +484,14 @@ async function handleChat(req, res, signal, requestId) {
       (token) => send({ type: 'token', value: token }),
       (actual) => send({ type: 'model', value: actual }),
     )
-    send({ type: 'done', model: result.model, gateway, fellBack: result.fellBack, routing: safeRouting(result) })
+    send({
+      type: 'done',
+      model: result.model,
+      gateway,
+      fellBack: result.fellBack,
+      truncated: Boolean(result.truncated),
+      routing: safeRouting(result),
+    })
     log.info('stream complete', {
       requestId,
       gateway,

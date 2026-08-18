@@ -11,11 +11,12 @@ const GATEWAY_ENV = [
   'AI_GATEWAY_PROVIDER', 'AI_GATEWAY_URL', 'AI_GATEWAY_BASE_URL', 'AI_GATEWAY_API_KEY',
   'AI_GATEWAY_DEFAULT_MODEL', 'AI_GATEWAY_TIMEOUT_MS', 'AI_GATEWAY_CONNECT_TIMEOUT_MS',
   'AI_GATEWAY_MAX_STREAM_MS', 'AI_GATEWAY_HEALTH_PATH', 'AI_GATEWAY_FALLBACK_MODELS',
+  'AI_GATEWAY_DEFAULT_MAX_TOKENS',
   'PIXGPT_MODEL_FAST', 'PIXGPT_MODEL_PRO', 'PIXGPT_MODEL_VISION',
 ]
 const PROVIDERS = ['OMNIROUTE', 'LITELLM', 'BIFROST', 'ONEAPI', 'NEWAPI', 'HIGRESS', 'PORTKEY']
 const SUFFIXES = ['BASE_URL', 'API_KEY', 'DEFAULT_MODEL', 'TIMEOUT_MS', 'CONNECT_TIMEOUT_MS',
-  'MAX_STREAM_MS', 'HEALTH_PATH', 'FALLBACK_MODELS', 'VISION_FALLBACK_MODELS',
+  'MAX_STREAM_MS', 'DEFAULT_MAX_TOKENS', 'HEALTH_PATH', 'FALLBACK_MODELS', 'VISION_FALLBACK_MODELS',
   'MODEL_FAST', 'MODEL_PRO', 'MODEL_VISION', 'VISION_ALIASES']
 
 /** The .env file is loaded at import time, so clear everything it may have set. */
@@ -129,6 +130,17 @@ describe('config precedence', () => {
     assert.equal(cfg.connectTimeoutMs, 15_000)
     assert.equal(cfg.timeoutMs, 60_000)
     assert.equal(cfg.maxStreamMs, 300_000)
+  })
+
+  test('a generous default max_tokens is applied when none is sent', () => {
+    assert.equal(gw.resolveConfig('omniroute').defaultMaxTokens, 8192)
+  })
+
+  test('DEFAULT_MAX_TOKENS is configurable and rejects junk', () => {
+    process.env.AI_GATEWAY_DEFAULT_MAX_TOKENS = '12345'
+    assert.equal(gw.resolveConfig('omniroute').defaultMaxTokens, 12345)
+    process.env.OMNIROUTE_DEFAULT_MAX_TOKENS = '0'
+    assert.equal(gw.resolveConfig('omniroute').defaultMaxTokens, 8192, 'invalid value falls back to the default')
   })
 
   test('timeouts are configurable and reject junk', () => {

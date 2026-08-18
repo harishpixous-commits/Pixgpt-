@@ -3117,3 +3117,51 @@
   color: var(--text-secondary);
   font-weight: 650;
 }
+
+/*
+ * "The answer was cut off at the model's output ceiling." An amber-ish note
+ * with one action — continue, which resumes the same message in place.
+ */
+.msg-truncated {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.msg-truncated-note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.msg-truncated-continue {
+  margin-left: auto;
+  padding: 5px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.msg-truncated-continue:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+}
+
+.msg-truncated-continue:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

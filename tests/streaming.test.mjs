@@ -81,6 +81,19 @@ before(async () => {
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify({ model, choices: [{ message: { content: 'complete answer' } }] })); return
 
+      case 'nonstream-cutoff': // finished, but at the output ceiling
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ model, choices: [{ message: { content: 'cut off here' }, finish_reason: 'length' }] })); return
+
+      case 'cutoff': // ends mid-sentence with finish_reason "length"
+        sse(); token('The answer starts and then ')
+        res.write(`data: ${JSON.stringify({ model, choices: [{ delta: {}, finish_reason: 'length' }] })}\n\n`)
+        res.write('data: [DONE]\n\n'); res.end(); return
+
+      case 'max-tokens-echo': // echoes back the max_tokens the client sent
+        sse(); token(String(JSON.parse(body || '{}').max_tokens ?? 'none'))
+        res.write('data: [DONE]\n\n'); res.end(); return
+
       case 'nonstream-malformed':
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end('{"choices":[{"oops":'); return
@@ -163,12 +176,61 @@ describe('streaming — happy paths', () => {
     assert.equal(res.content, 'complete answer')
   })
 
+  test('a non-streaming reply that stops at the ceiling is flagged truncated', async () => {
+    const c = client()
+    const res = await c.completion({ model: 'nonstream-cutoff', messages: [{ role: 'user', content: 'x' }] })
+    assert.equal(res.content, 'cut off here')
+    assert.equal(res.truncated, true, 'finish_reason "length" must surface as truncated')
+    assert.equal(res.finishReason, 'length')
+  })
+
   test('a malformed non-streaming body is reported, not thrown raw', async () => {
     const c = client()
     await assert.rejects(
       () => c.completion({ model: 'nonstream-malformed', messages: [{ role: 'user', content: 'x' }] }),
       (e) => e.code === 'malformed_response',
     )
+  })
+})
+
+describe('streaming — output ceilings', () => {
+  test('a stream that ends with finish_reason "length" is flagged truncated', async () => {
+    const out = await run(client(), 'cutoff')
+    assert.equal(out.ok, true, 'the stream itself succeeded — the answer was just cut off')
+    assert.equal(out.text, 'The answer starts and then ')
+    assert.equal(out.result.truncated, true)
+    assert.equal(out.result.finishReason, 'length')
+  })
+
+  test('a stream that ends cleanly is not truncated', async () => {
+    const out = await run(client(), 'normal')
+    assert.equal(out.ok, true)
+    assert.equal(out.result.truncated, false)
+    assert.equal(out.result.finishReason, null)
+  })
+
+  test('the configured default max_tokens is sent when the caller names none', async () => {
+    const out = await run(client({ defaultMaxTokens: 12_345 }), 'max-tokens-echo')
+    assert.equal(out.ok, true)
+    assert.equal(out.text, '12345', 'the provider must receive the default ceiling')
+  })
+
+  test('an explicit maxTokens always wins over the default', async () => {
+    const c = client({ defaultMaxTokens: 12_345 })
+    const tokens = []
+    const res = await c.streamCompletion(
+      { model: 'max-tokens-echo', maxTokens: 999, messages: [{ role: 'user', content: 'x' }] },
+      undefined,
+      (t) => tokens.push(t),
+    )
+    assert.equal(tokens.join(''), '999')
+    assert.equal(res.truncated, false)
+  })
+
+  test('no default configured means no max_tokens is sent', async () => {
+    const out = await run(client({ defaultMaxTokens: undefined }), 'max-tokens-echo')
+    assert.equal(out.ok, true)
+    assert.equal(out.text, 'none')
   })
 })
 
